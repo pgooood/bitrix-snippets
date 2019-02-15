@@ -59,6 +59,18 @@ class iblock{
 		);
 	}
 	
+	function getSectionList($arFilter, $arSelect = null, $arProps = null){
+		if(!is_array($arFilter))
+			$arFilter = array();
+		return \CIBlockSection::GetList(
+			empty($arProps['sort']) ? array('SORT' => 'ASC', 'ID' => 'DESC') : $arProps['sort']
+			, array_merge($arFilter, array('IBLOCK_ID' => $this->id))
+			, !empty($arProps['bIncCnt'])
+			, $arSelect
+			, empty($arProps['nav']) ? false : $arProps['nav']
+		);
+	}
+	
 	/**
 	 * Возвращает массив значений списочного свойства
 	 * результаты запросов кешируются в статическом свойстве класса
