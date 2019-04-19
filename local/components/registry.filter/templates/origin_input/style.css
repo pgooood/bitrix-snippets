@@ -1,0 +1,9 @@
+.catalog-filter {
+	background: #edf6fc;
+}
+
+.catalog-filter-field-separator {
+	width: 20px;
+	min-width: 20px;
+	max-width: 20px;
+}
