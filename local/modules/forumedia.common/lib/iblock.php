@@ -45,6 +45,20 @@ class iblock{
 			return self::$arListProps[$this->id()][$code];
 	}
 
+	/**
+	 * Проверяет, есть ли свойство у ИБ
+	 * 
+	 * @return Boolean
+	 */
+	function hasProp($code){
+		$res = \Bitrix\Iblock\PropertyTable::getList([
+			'select' => ['ID']
+			,'filter' => ['IBLOCK_ID' => $this->id, 'CODE' => $code]
+			,'cache'  => ['ttl' => 3600]
+		])->fetch();
+		return !empty($res);
+	}
+
 	function el(){
 		if(!$this->el)
 			$this->el = new \CIBlockElement;

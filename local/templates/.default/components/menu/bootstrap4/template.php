@@ -129,13 +129,12 @@ $menuElement = (new menuTag('div'))
 $ul1 = $menuElement
 		->append('nav')
 		->cl('bx-top-nav-container')
-		->cl('bx-top-nav-container')
 		->id('cont_' . $menuBlockId)
 		
 		->append('div')
 		->cl('container')
 		
-		/* список первого уровеня меню */
+		/* список первого уровня меню */
 		->append('ul')
 		->cl('bx-nav-list-1-lvl')
 		->id('ul_' . $menuBlockId);
