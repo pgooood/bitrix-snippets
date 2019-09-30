@@ -216,4 +216,32 @@ class iblock{
 			$this->el()->Update($r['ID'],['ACTIVE' => 'N'],false,false,false,false);
 	}
 
+	/**
+	 * Ищет инфоблок по коду и с учетем типа инфоблока, если задан
+	 * результаты запросов кешируются в статическом свойстве класса
+	 * 
+	 * @param string $path - '{CODE}' или '{TYPE}/{CODE}'
+	 * @return \forumedia\common\iblock
+	 */
+	static function find($path){
+		if(!is_array(self::$arIblockIds))
+			self::$arIblockIds = array();
+		
+		$arPath = array_filter(explode('/',$path));
+		$code = array_pop($arPath);
+		$type = array_pop($arPath);
+		
+		if(!isset(self::$arIblockIds[$path])
+			&& strlen($code)
+		){
+			$arFilter = array('CODE' => $code);
+			if(strlen($type))
+				$arFilter['TYPE'] = $type;
+			if($r = \CIBlock::GetList(array(),$arFilter)->Fetch())
+				self::$arIblockIds[$path] = $r['ID'];
+		}
+		if(isset(self::$arIblockIds[$path]))
+			return new iblock(self::$arIblockIds[$path]);
+	}
+
 }
