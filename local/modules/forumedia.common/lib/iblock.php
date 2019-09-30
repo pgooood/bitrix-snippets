@@ -9,7 +9,7 @@ namespace forumedia\common;
  */
 class iblock{
 
-	protected static $arListProps,$arListPropValues;
+	protected static $arIblockIds,$arListProps,$arListPropValues;
 	protected $id,$el,$sc;
 
 	function __construct($id){
