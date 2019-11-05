@@ -163,7 +163,7 @@ class iblock{
 				foreach($arValues as $arValue)
 					if($arValue['VALUE'] == $value)
 						return $arValue['ID'];
-			}elseif(isset(self::$arListPropValues[$name][$value]))
+			}elseif(isset($arValues[$value]))
 				return intval($arValues[$value]['ID']);
 
 			//добавляем значение если не существует
@@ -176,7 +176,7 @@ class iblock{
 				$CIBlockProp = new \CIBlockProperty;
 				$CIBlockProp->UpdateEnum($arProp['ID'],$arValues);
 				unset(self::$arListPropValues[$arProp['ID']]);
-				return $this->listPropValueId($code,$value,$byValue,false);
+				return $this->listPropValueId($name,$value,$byValue,false);
 			}
 		}
 	}
