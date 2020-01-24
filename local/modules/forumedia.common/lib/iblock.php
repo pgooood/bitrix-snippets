@@ -46,6 +46,35 @@ class iblock{
 	}
 
 	/**
+	 * Возвращает массив значений для заданного свойства элемента
+	 * 
+	 * @param integer $elementId
+	 * @param string $code
+	 * @return array
+	 */
+	function propVal($elementId,$code){
+		if(($elementId = intval($elementId)) && $code){
+			$rs = \CIBlockElement::GetProperty(
+					$this->id()
+					,$elementId
+					,'sort','asc'
+					,array('CODE' => $code)
+				);
+			$arRes = array();
+			while($r = $rs->GetNext()){
+				$arRes[] = array(
+					'ID' => $r['~PROPERTY_VALUE_ID']
+					,'VALUE' => $r['~VALUE']
+					,'DESCRIPTION' => $r['~DESCRIPTION']
+					,'VALUE_ENUM' => $r['~VALUE_ENUM']
+					,'VALUE_XML_ID' => $r['~VALUE_XML_ID']
+				);
+			}
+			return $arRes;
+		}
+	}
+
+	/**
 	 * Проверяет, есть ли свойство у ИБ
 	 * 
 	 * @return Boolean
