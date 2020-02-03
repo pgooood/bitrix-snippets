@@ -232,6 +232,12 @@ class iblock{
 		}
 	}
 
+	function delete($elementId){
+		if(\CIBlock::GetPermission($this->id()) >= 'W')
+			return \CIBlockElement::Delete($elementId);
+		throw new \Exception('Недостаточно прав для удаления элемента');
+	}
+
 	function setProps($elementId,$arValues){
 		if(($elementId = intval($elementId)) && is_array($arValues) && !empty($arValues)
 		){
