@@ -116,11 +116,11 @@ class iblock{
 		if(!is_array($arFilter))
 			$arFilter = array();
 		return \CIBlockElement::GetList(
-						empty($arProps['sort']) ? array('SORT' => 'ASC','ID' => 'DESC') : $arProps['sort']
-						,array_merge($arFilter,array('IBLOCK_ID' => $this->id))
-						,empty($arProps['group']) ? false : $arProps['group']
-						,empty($arProps['nav']) ? false : $arProps['nav']
-						,$arSelect
+				empty($arProps['group']) ? (empty($arProps['sort']) ? array('SORT' => 'ASC','ID' => 'DESC') : $arProps['sort']) : null
+				,array_merge($arFilter,array('IBLOCK_ID' => $this->id))
+				,empty($arProps['group']) ? false : $arProps['group']
+				,empty($arProps['nav']) ? false : $arProps['nav']
+				,$arSelect
 		);
 	}
 
@@ -132,11 +132,11 @@ class iblock{
 		if(!is_array($arFilter))
 			$arFilter = array();
 		return \CIBlockSection::GetList(
-						empty($arProps['sort']) ? array('SORT' => 'ASC','ID' => 'DESC') : $arProps['sort']
-						,array_merge($arFilter,array('IBLOCK_ID' => $this->id))
-						,!empty($arProps['bIncCnt'])
-						,$arSelect
-						,empty($arProps['nav']) ? false : $arProps['nav']
+				empty($arProps['sort']) ? array('SORT' => 'ASC','ID' => 'DESC') : $arProps['sort']
+				,array_merge($arFilter,array('IBLOCK_ID' => $this->id))
+				,!empty($arProps['bIncCnt'])
+				,$arSelect
+				,empty($arProps['nav']) ? false : $arProps['nav']
 		);
 	}
 
