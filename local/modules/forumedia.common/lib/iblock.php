@@ -25,7 +25,7 @@ class iblock{
 	}
 
 	function toArray(){
-		return \CIBlock::GetByID($this->id)->GetNext(true,false);
+		return \CIBlock::GetByID($this->id)->Fetch();
 	}
 
 	/**
