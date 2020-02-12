@@ -13,7 +13,7 @@ class iblock{
 	protected $id,$el,$sc;
 
 	function __construct($id){
-		$this->id = intval($id);
+		$this->id = is_numeric($id) ? intval($id) : self::findId($id);
 		if(!($this->id > 0))
 			throw new \Exception('invalid iblock id');
 		if(!\CModule::IncludeModule('iblock'))
@@ -259,6 +259,18 @@ class iblock{
 	 * @return \forumedia\common\iblock
 	 */
 	static function find($path){
+		if($id = self::findId($path))
+			return new iblock($id);
+	}
+
+	/**
+	 * Ищет инфоблок по коду и с учетем типа инфоблока, если задан
+	 * результаты запросов кешируются в статическом свойстве класса
+	 * 
+	 * @param string $path - '{CODE}' или '{TYPE}/{CODE}'
+	 * @return integer
+	 */
+	static function findId($path){
 		if(!is_array(self::$arIblockIds))
 			self::$arIblockIds = array();
 		
@@ -276,7 +288,7 @@ class iblock{
 				self::$arIblockIds[$path] = $r['ID'];
 		}
 		if(isset(self::$arIblockIds[$path]))
-			return new iblock(self::$arIblockIds[$path]);
+			return self::$arIblockIds[$path];
 	}
 
 }
