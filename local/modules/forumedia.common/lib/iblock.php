@@ -9,7 +9,7 @@ namespace forumedia\common;
  */
 class iblock{
 
-	protected static $arIblockIds,$arListProps,$arListPropValues;
+	protected static $arIblockIds;
 	protected $id,$el,$sc;
 
 	function __construct($id){
@@ -26,66 +26,6 @@ class iblock{
 
 	function toArray(){
 		return \CIBlock::GetByID($this->id)->Fetch();
-	}
-
-	/**
-	 * Возвращает массив с информацией о свойстве инфоблока
-	 * результаты кешируются в статическом свойстве класса
-	 * 
-	 * @param string $code
-	 * @return array
-	 */
-	function prop($code){
-		if(!is_array(self::$arListProps))
-			self::$arListProps = array();
-		if(!isset(self::$arListProps[$this->id()][$code]))
-			self::$arListProps[$this->id()][$code] = \CIBlockProperty::GetList(array('NAME' => 'ASC'),array('IBLOCK_ID' => $this->id(),'CODE' => $code))
-					->GetNext(false,false);
-		if(isset(self::$arListProps[$this->id()][$code]))
-			return self::$arListProps[$this->id()][$code];
-	}
-
-	/**
-	 * Возвращает массив значений для заданного свойства элемента
-	 * 
-	 * @param integer $elementId
-	 * @param string $code
-	 * @return array
-	 */
-	function propVal($elementId,$code){
-		if(($elementId = intval($elementId)) && $code){
-			$rs = \CIBlockElement::GetProperty(
-					$this->id()
-					,$elementId
-					,'sort','asc'
-					,array('CODE' => $code)
-				);
-			$arRes = array();
-			while($r = $rs->GetNext()){
-				$arRes[] = array(
-					'ID' => $r['~PROPERTY_VALUE_ID']
-					,'VALUE' => $r['~VALUE']
-					,'DESCRIPTION' => $r['~DESCRIPTION']
-					,'VALUE_ENUM' => $r['~VALUE_ENUM']
-					,'VALUE_XML_ID' => $r['~VALUE_XML_ID']
-				);
-			}
-			return $arRes;
-		}
-	}
-
-	/**
-	 * Проверяет, есть ли свойство у ИБ
-	 * 
-	 * @return Boolean
-	 */
-	function hasProp($code){
-		$res = \Bitrix\Iblock\PropertyTable::getList([
-			'select' => ['ID']
-			,'filter' => ['IBLOCK_ID' => $this->id, 'CODE' => $code]
-			,'cache'  => ['ttl' => 3600]
-		])->fetch();
-		return !empty($res);
 	}
 
 	function el(){
@@ -150,66 +90,7 @@ class iblock{
 			throw new \Exception($this->sc()->LAST_ERROR);
 		return $id;
 	}
-
-	/**
-	 * Возвращает массив значений списочного свойства
-	 * результаты запросов кешируются в статическом свойстве класса
-	 * 
-	 * @param string $name
-	 * @return array
-	 */
-	function listPropValues($name){
-		if(!is_array(self::$arListPropValues))
-			self::$arListPropValues = array();
-		if($arProp = $this->prop($name)){
-			if(empty(self::$arListPropValues[$arProp['ID']])){
-				$rs = \CIBlockPropertyEnum::GetList(array('SORT' => 'ASC')
-								,array('IBLOCK_ID' => $this->id,'CODE' => $name));
-				self::$arListPropValues[$arProp['ID']] = array();
-				while($r = $rs->GetNext(false,false)){
-					unset($r['PROPERTY_NAME'],$r['PROPERTY_CODE'],$r['PROPERTY_SORT'],$r['TMP_ID']);
-					self::$arListPropValues[$arProp['ID']][$r['EXTERNAL_ID']] = $r;
-				}
-			}
-			if(!empty(self::$arListPropValues[$arProp['ID']]))
-				return self::$arListPropValues[$arProp['ID']];
-		}
-	}
-
-	/**
-	 * Возвращает айди значения списочного свойства
-	 * результаты запросов кешируются в статическом свойстве класса
-	 * 
-	 * @param string $name код свойства
-	 * @param string $value значение или его XML_ID, в зависимости от аргумента $byValue
-	 * @param boolean $byValue если установлени правда, будет искать по значению, а не по XML_ID
-	 * @param boolean $addIfNotExists если установлени правда, будет добавлять значение в список, если его не существует
-	 * @return int
-	 */
-	function listPropValueId($name,$value,$byValue = false,$addIfNotExists = false){
-		if($arValues = $this->listPropValues($name)){
-			if($byValue){
-				foreach($arValues as $arValue)
-					if($arValue['VALUE'] == $value)
-						return $arValue['ID'];
-			}elseif(isset($arValues[$value]))
-				return intval($arValues[$value]['ID']);
-
-			//добавляем значение если не существует
-			if($addIfNotExists && ($arProp = $this->prop($name))){
-				$arValues = array();
-				$i = 0;
-				foreach($arValues as $arVal)
-					$arValues[$arVal['ID']] = array('SORT' => ++$i,'VALUE' => $arVal['VALUE']);
-				$arValues[] = array('SORT' => ++$i,'VALUE' => $value);
-				$CIBlockProp = new \CIBlockProperty;
-				$CIBlockProp->UpdateEnum($arProp['ID'],$arValues);
-				unset(self::$arListPropValues[$arProp['ID']]);
-				return $this->listPropValueId($name,$value,$byValue,false);
-			}
-		}
-	}
-
+	
 	function add($arFields,$arProps = null){
 		if(is_array($arFields) && !empty($arFields['NAME'])){
 			$arFields = array_merge($arFields,array('IBLOCK_ID' => $this->id()));
@@ -236,13 +117,6 @@ class iblock{
 		if(\CIBlock::GetPermission($this->id()) >= 'W')
 			return \CIBlockElement::Delete($elementId);
 		throw new \Exception('Недостаточно прав для удаления элемента');
-	}
-
-	function setProps($elementId,$arValues){
-		if(($elementId = intval($elementId)) && is_array($arValues) && !empty($arValues)
-		){
-			return \CIBlockElement::SetPropertyValuesEx($elementId,$this->id,$arValues);
-		}
 	}
 
 	function deactivateElements($arFilter = null){
@@ -289,6 +163,81 @@ class iblock{
 		}
 		if(isset(self::$arIblockIds[$path]))
 			return self::$arIblockIds[$path];
+	}
+
+
+
+
+
+	/*
+	 * Методы работы с свойствами
+	 */
+	
+	
+	function setProps($elementId,$arValues){
+		if(($elementId = intval($elementId)) && is_array($arValues) && !empty($arValues)
+		){
+			return \CIBlockElement::SetPropertyValuesEx($elementId,$this->id,$arValues);
+		}
+	}
+	
+	/**
+	 * Возвращает массив с информацией о свойстве инфоблока
+	 * результаты кешируются в статическом свойстве класса
+	 * 
+	 * @param integer|string $code код или идентификатор свойства
+	 * @return array
+	 */
+	function prop($code,$wrap = false){
+		$prop = new iblock\prop($code,$this);
+		return $wrap ? $prop : $prop->toArray();
+	}
+	
+	function propList(){
+		return iblock\prop::list($this);
+	}
+
+	/**
+	 * Возвращает массив значений для заданного свойства элемента
+	 * 
+	 * @param string $code
+	 * @param integer $elementId
+	 * @return array
+	 */
+	function propVal($code,$elementId){
+		return $this->prop($code,true)->value($elementId);
+	}
+
+	/**
+	 * Проверяет, есть ли свойство у ИБ
+	 * @param string $code
+	 * @return type
+	 */
+	function hasProp($code){
+		return $this->prop($code,true)->exists();
+	}
+
+	/**
+	 * Возвращает массив значений списочного свойства
+	 * 
+	 * @param string $code
+	 * @return array
+	 */
+	function listPropValues($code){
+		return $this->prop($code,true)->enumValues();
+	}
+
+	/**
+	 * Возвращает айди значения списочного свойства
+	 * 
+	 * @param string $code код свойства
+	 * @param string $value значение или его XML_ID, в зависимости от аргумента $byValue
+	 * @param boolean $byValue если установлени правда, будет искать по значению, а не по XML_ID
+	 * @param boolean $addIfNotExists если установлени правда, будет добавлять значение в список, если его не существует
+	 * @return int
+	 */
+	function listPropValueId($code,$value,$byValue = false,$addIfNotExists = false){
+		return $this->prop($code)->emunValueId($value,$byValue,$addIfNotExists);
 	}
 
 }
