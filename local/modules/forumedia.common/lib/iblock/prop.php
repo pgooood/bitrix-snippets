@@ -169,13 +169,8 @@ class prop{
 	
 	function addEnumValue($value,$code = null,$sort = null){
 		if($arProp = $this->toArray()){
-			$arValues = [];
-			$i = 0;
-			foreach($arValues as $arVal)
-				$arValues[$arVal['ID']] = array('SORT' => ($i = $i + 10),'VALUE' => $arVal['VALUE']);
-			if($sort === null)
-				$sort = $i + 10;
-			$arValues[] = array('SORT' => $sort,'VALUE' => $value,'XML_ID' => $code);
+			$arValues = $this->enumValues();
+			$arValues[] = array('SORT' => count($arValues) * 10 + 10,'VALUE' => $value,'XML_ID' => $code);
 			$this->pr()->UpdateEnum($arProp['ID'],$arValues);
 			unset(self::$arCacheValues[$arProp['ID']],self::$arCacheValues[$arProp['CODE']]);
 			return $this->enumValueId($value,true,false);
