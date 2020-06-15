@@ -237,7 +237,7 @@ class iblock{
 	 * @return int
 	 */
 	function listPropValueId($code,$value,$byValue = false,$addIfNotExists = false){
-		return $this->prop($code)->emunValueId($value,$byValue,$addIfNotExists);
+		return $this->prop($code,true)->emunValueId($value,$byValue,$addIfNotExists);
 	}
 
 }
