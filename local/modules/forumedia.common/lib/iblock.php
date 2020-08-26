@@ -164,7 +164,15 @@ class iblock{
 		if(isset(self::$arIblockIds[$path]))
 			return self::$arIblockIds[$path];
 	}
-
+	
+	/**
+	 * Сброс тегированного кеша
+	 * обычно приходится вызывать после setProps
+	 * т.к. битриксовый SetPropertyValuesEx не сбрасывает кеш
+	 */
+	function clearTagCache(){
+		\CIBlock::clearIblockTagCache($this->id());
+	}
 
 
 
