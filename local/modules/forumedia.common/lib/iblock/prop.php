@@ -76,13 +76,14 @@ class prop{
 				);
 			$arRes = [];
 			while($r = $rs->Fetch())
-				$arRes[] = [
-					'ID' => $r['~PROPERTY_VALUE_ID']
-					,'VALUE' => $r['~VALUE']
-					,'DESCRIPTION' => $r['~DESCRIPTION']
-					,'VALUE_ENUM' => $r['~VALUE_ENUM']
-					,'VALUE_XML_ID' => $r['~VALUE_XML_ID']
-				];
+				if($r['PROPERTY_VALUE_ID'])
+					$arRes[] = [
+						'ID' => $r['~PROPERTY_VALUE_ID']
+						,'VALUE' => $r['~VALUE']
+						,'DESCRIPTION' => $r['~DESCRIPTION']
+						,'VALUE_ENUM' => $r['~VALUE_ENUM']
+						,'VALUE_XML_ID' => $r['~VALUE_XML_ID']
+					];
 			return $arRes;
 		}
 	}
