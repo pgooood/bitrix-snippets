@@ -3,21 +3,21 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 CJSCore::RegisterExt('jquery3',[
 	'skip_core' => true
-	,'js' => 'https://code.jquery.com/jquery-3.4.1.min.js'
+	,'js' => 'https://code.jquery.com/jquery-3.5.1.min.js'
 ]);
 CJSCore::RegisterExt('popper',[
 	'skip_core' => true
-	,'js' => 'https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js'
+	,'js' => 'https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js'
 ]);
 CJSCore::RegisterExt('bootstrap4',[
 	'skip_core' => true
-	,'js' => 'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js'
+	,'js' => 'https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js'
 	,'rel' => ['jquery3','popper']
 ]);
 CJSCore::Init(['bootstrap4']);
 
 $asset = \Bitrix\Main\Page\Asset::getInstance();
-$asset->addCss('https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css');
+$asset->addCss('https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css');
 $asset->addCss('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css');
 
 ?><!doctype html>
