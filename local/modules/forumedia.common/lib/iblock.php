@@ -151,15 +151,20 @@ class iblock{
 		$arPath = array_filter(explode('/',$path));
 		$code = array_pop($arPath);
 		$type = array_pop($arPath);
-		
 		if(!isset(self::$arIblockIds[$path])
 			&& strlen($code)
 		){
 			$arFilter = array('CODE' => $code);
 			if(strlen($type))
-				$arFilter['TYPE'] = $type;
-			if($r = \CIBlock::GetList(array(),$arFilter)->Fetch())
+				$arFilter['IBLOCK_TYPE_ID'] = $type;
+			if($r = \Bitrix\Iblock\IblockTable::getList([
+					'filter' => $arFilter
+					,'select' => ['ID']
+					,'cache' => ['ttl' => 360,'cache_joins' => true]
+				])->fetch()
+			){
 				self::$arIblockIds[$path] = $r['ID'];
+			};
 		}
 		if(isset(self::$arIblockIds[$path]))
 			return self::$arIblockIds[$path];
