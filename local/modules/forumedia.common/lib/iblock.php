@@ -90,7 +90,24 @@ class iblock{
 			throw new \Exception($this->sc()->LAST_ERROR);
 		return $id;
 	}
-	
+
+	/**
+	 * Возвращает все значения списочного, пользовательского свойства раздела
+	 * @param string $name символьный код пользовательского поля
+	 * @return array
+	 */
+	function sectionUfListValues($name){
+		if(($arUf = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFields('IBLOCK_'.$this->id().'_SECTION'))
+			&& !empty($arUf[$name]['ID'])
+		){
+			$arValues = [];
+			$rs = (new \CUserFieldEnum)->GetList([],['USER_FIELD_ID' => $arUf[$name]['ID']]);
+			while($r = $rs->Fetch())
+			   $arValues[] = $r;
+			return $arValues;
+		}
+	}
+
 	function add($arFields,$arProps = null){
 		if(is_array($arFields) && !empty($arFields['NAME'])){
 			$arFields = array_merge($arFields,array('IBLOCK_ID' => $this->id()));
