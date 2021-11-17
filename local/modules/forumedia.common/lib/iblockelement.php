@@ -10,7 +10,7 @@ namespace forumedia\common;
  * @author Pavel Khoroshkov <pgood@forumedia.com>
  */
 class iblockElement{
-	protected $ibEl,$arFields,$arProperties;
+	protected $ibEl,$arFields,$arProps;
 	
 	function __construct(?\_CIBElement $ibEl){
 		$this->ob($ibEl);
@@ -25,6 +25,10 @@ class iblockElement{
 		$this->ibEl = $ibEl;
 		$this->arFields = $ibEl->GetFields();
 		$this->arProps = $ibEl->GetProperties();
+	}
+	
+	function props(){
+		return $this->arProps;
 	}
 	
 	/**
@@ -46,14 +50,16 @@ class iblockElement{
 		if(isset($this->arProps[$fieldName])){
 			$r = &$this->arProps[$fieldName];
 			if('Y' === $r['MULTIPLE']){
+				if('raw' == $arguments[0] ?? null)
+					return $r['~VALUE'];
 				switch($r['PROPERTY_TYPE']){
 					case 'E':
 						return $r['~VALUE'] ? iblockElement::select(['ID' => $r['~VALUE']]) : [];
 					case 'G':
 						return $r['~VALUE'] ? iblockSection::select(['ID' => $r['~VALUE']]) : [];
 					default:
-						if('directory' === $r['USER_TYPE'])
-							return $this->propValue($r,$v,$arguments);
+						if('MULTIDATA' === $r['CODE'] || 'directory' === $r['USER_TYPE'])
+							return $this->propValue($r,$this->ob(),$arguments);
 						$arValues = [];
 						foreach($r['~VALUE'] as $v)
 							$arValues[] = $this->propValue($r,$v,$arguments);
@@ -67,30 +73,51 @@ class iblockElement{
 	}
 	
 	protected function fieldValue($name,&$arguments){
+		switch($name){
+			case 'ACTIVE_FROM':
+			case 'ACTIVE_TO':
+			case 'TIMESTAMP_X':
+			case 'DATE_CREATE':
+				return self::dateValue($this->arFields[$name],$arguments);
+			case 'PREVIEW_TEXT':
+			case 'DETAIL_TEXT':
+				return 'html' == $this->arFields[$name.'_TYPE']
+					? htmlspecialchars_decode($this->arFields[$name])
+					: $this->arFields[$name];
+		}
 		return $this->arFields[$name] ?? null;
 	}
 	
 	protected function propValue(&$arProp,$value,&$arguments){
+		if('raw' == $arguments[0] ?? null)
+			return $value;
 		switch($arProp['PROPERTY_TYPE']){
 			case 'L':
-				return [
+				$arResult = [
 					'ID' => $arProp['VALUE_ENUM_ID']
 					,'CODE' => $arProp['VALUE_XML_ID']
 					,'VALUE' => $arProp['~VALUE']
 				];
+				return isset($arguments[0])
+						? ($arResult[$arguments[0]] ?? null)
+						: $arResult;
 			case 'E':
 				return self::getById($value);
 			case 'G':
 				return iblockSection::getById($value,$arProp['LINK_IBLOCK_ID']);
 			case 'F':
-				return $value
-					? ['ID' => $value,'PATH' => \CFile::GetPath($value)]
-					: null;
+				if($value && ($path = \CFile::GetPath($value)))
+					return 'path' == $arguments[0] ?? null
+							? $path
+							: ['ID' => $value,'PATH' => $path];
+				return null;
 			default:
-				if('MULTIDATA' === $arProp['CODE'])
-					return new multiProp($this->iblock(),'MULTIDATA',$this->ibEl);
+				if('MULTIDATA' === $arProp['CODE'] && \Bitrix\Main\Loader::includeModule('forumedia.applications'))
+					return new \forumedia\applications\multiProp($this->iblock(),$arProp['CODE'],$value);
+				if(in_array($arProp['USER_TYPE'],['Date','DateTime']))
+					return self::dateValue($value,$arguments);
 				if('directory' === $arProp['USER_TYPE'])
-					return new \forumedia\common\propHl($this->iblock(),'PRODUCTS',$this->ibEl);
+					return new \forumedia\common\propHl($this->iblock(),$arProp['CODE'],$value);
 				if('UserID' === $arProp['USER_TYPE'] && $value)
 					return new \forumedia\common\user($value);
 				if('HTML' === $arProp['USER_TYPE'] && $value)
@@ -114,7 +141,7 @@ class iblockElement{
 	 * @return \self
 	 * @throws \Exception
 	 */
-	static function select($arFilter,$arSelect = null,$arProps = null){
+	static function select($arFilter,$arSelect = null,$arProps = null,&$rs = null){
 		if(!\Bitrix\Main\Loader::IncludeModule('iblock'))
 			throw new \Exception('iblock module required');
 		if(!\Bitrix\Main\Loader::includeModule('forumedia.common'))
@@ -156,6 +183,16 @@ class iblockElement{
 	function iblock(){
 		if(\Bitrix\Main\Loader::includeModule('forumedia.common'))
 			return new \forumedia\common\iblock($this->arFields['IBLOCK_ID']);
+	}
+	
+	protected static function dateValue($value,&$arguments){
+		if(!empty($value) && $arguments){
+			$dt = isset($arguments[1])
+				? new \DateTime($value,new \DateTimeZone($arguments[1]))
+				: new \DateTime($value);
+			return $dt->format($arguments[0]);
+		}
+		return $value;
 	}
 	
 }

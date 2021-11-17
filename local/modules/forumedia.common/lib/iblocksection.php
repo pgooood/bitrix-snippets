@@ -36,6 +36,7 @@ class iblockSection{
 			$arFilter['IBLOCK_ID'] = \forumedia\common\iblock::findId($arFilter['IBLOCK_CODE']) ?: -1;
 			unset($arFilter['IBLOCK_CODE']);
 		}
+		$className = get_called_class();
 		$arRes = [];
 		$rs = \CIBlockSection::GetList(
 				empty($arProps['sort']) ?? ['SORT' => 'ASC','ID' => 'DESC']
@@ -45,20 +46,22 @@ class iblockSection{
 				,$arProps['nav'] ?? false
 			);
 		while($ibEl = $rs->GetNextElement(false,false))
-			$arRes[] = new self($ibEl);
+			$arRes[] = new $className($ibEl);
 		return $arRes;
 	}
 	
 	static function getById($id,$iblockId = null){
+		$className = get_called_class();
 		return $id
-			? self::getFirst(['ID' => $id,'IBLOCK_ID' => $iblockId])
-			: new self(null);
+			? $className::getFirst(['ID' => $id,'IBLOCK_ID' => $iblockId])
+			: new $className(null);
 	}
 	
 	static function getFirst($arFilter,$arSelect = null,$arProps = null){
-		return ($arEl = self::select($arFilter,$arSelect,$arProps))
+		$className = get_called_class();
+		return ($arEl = $className::select($arFilter,$arSelect,$arProps))
 			? array_shift($arEl)
-			: new self(null);
+			: new $className(null);
 	}
 	
 }
