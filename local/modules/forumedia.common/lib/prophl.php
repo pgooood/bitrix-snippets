@@ -131,7 +131,7 @@ class propHl implements \Iterator{
 		}else
 			unset($arRow['UF_SORT'],$arRow['UF_DESCRIPTION'],$arRow['UF_FULL_DESCRIPTION'],$arRow['UF_XML_ID']);
 		ksort($arRow);
-		return crc32(implode('|',$arRow));
+		return crc32(implode('|',array_map(function($v){ return is_scalar($v) ? $v : serialize($v); },$arRow)));
 	}
 	
 	/**
@@ -182,6 +182,7 @@ class propHl implements \Iterator{
 				return 'UF_'.$name;
 			return $name;
 		};
+	
 		$fnPrepRows = function($r) use ($arRows,$fnName){
 			$arResult = [];
 			foreach($arRows as $r){
@@ -226,6 +227,9 @@ class propHl implements \Iterator{
 			}else
 				$arAdd[] = $r;
 		}
+		if($arAdd)
+			foreach($arAdd as $r)
+				$arResult[] = $this->add($r);
 		// удаление не сопоставленных записей в HL, есть возможность отфильтровать удаляемые записи через deleteFilter()
 		if($arToDelete = array_diff($arIds,array_column($arUpdate,'ID')))
 			foreach($arExistedRows as $r)
@@ -234,9 +238,7 @@ class propHl implements \Iterator{
 		if($arUpdate)
 			foreach($arUpdate as $r)
 				$arResult[] = $this->update($r['ID'],$r);
-		if($arAdd)
-			foreach($arAdd as $r)
-				$arResult[] = $this->add($r);
+
 		return $arResult;
 	}
 

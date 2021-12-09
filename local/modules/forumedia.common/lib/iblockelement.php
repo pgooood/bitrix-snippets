@@ -65,7 +65,6 @@ class iblockElement{
 							$arValues[] = $this->propValue($r,$v,$arguments);
 						return $arValues;
 				}
-				
 			}
 			return $this->propValue($r,$r['~VALUE'],$arguments);
 		}
@@ -85,7 +84,7 @@ class iblockElement{
 					? htmlspecialchars_decode($this->arFields[$name])
 					: $this->arFields[$name];
 		}
-		return $this->arFields[$name] ?? null;
+		return $this->arFields[$name] ?? $this->arFields['PROPERTY_'.$name] ?? $this->arFields['PROPERTY_'.$name.'_VALUE'] ?? null;
 	}
 	
 	protected function propValue(&$arProp,$value,&$arguments){
@@ -93,11 +92,19 @@ class iblockElement{
 			return $value;
 		switch($arProp['PROPERTY_TYPE']){
 			case 'L':
-				$arResult = [
-					'ID' => $arProp['VALUE_ENUM_ID']
-					,'CODE' => $arProp['VALUE_XML_ID']
-					,'VALUE' => $arProp['~VALUE']
-				];
+				if('Y' === $arProp['MULTIPLE']){
+					if(false !== ($i = array_search($value,$arProp['~VALUE'])))
+						$arResult = [
+							'ID' => $arProp['VALUE_ENUM_ID'][$i]
+							,'CODE' => $arProp['VALUE_XML_ID'][$i]
+							,'VALUE' => $arProp['~VALUE'][$i]
+						];
+				}else
+					$arResult = [
+						'ID' => $arProp['VALUE_ENUM_ID']
+						,'CODE' => $arProp['VALUE_XML_ID']
+						,'VALUE' => $arProp['~VALUE']
+					];
 				return isset($arguments[0])
 						? ($arResult[$arguments[0]] ?? null)
 						: $arResult;
