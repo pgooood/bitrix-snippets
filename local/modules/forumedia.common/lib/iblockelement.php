@@ -27,6 +27,10 @@ class iblockElement{
 		$this->arProps = $ibEl->GetProperties();
 	}
 	
+	function fields(){
+		return $this->arFields;
+	}
+	
 	function props(){
 		return $this->arProps;
 	}
@@ -77,7 +81,7 @@ class iblockElement{
 			case 'ACTIVE_TO':
 			case 'TIMESTAMP_X':
 			case 'DATE_CREATE':
-				return self::dateValue($this->arFields[$name],$arguments);
+				return static::dateValue($this->arFields[$name],$arguments);
 			case 'PREVIEW_TEXT':
 			case 'DETAIL_TEXT':
 				return 'html' == $this->arFields[$name.'_TYPE']
@@ -113,22 +117,41 @@ class iblockElement{
 			case 'G':
 				return iblockSection::getById($value,$arProp['LINK_IBLOCK_ID']);
 			case 'F':
-				if($value && ($path = \CFile::GetPath($value)))
-					return 'path' == $arguments[0] ?? null
-							? $path
-							: ['ID' => $value,'PATH' => $path];
+				if($value && ($path = \CFile::GetPath($value))){
+					$arResult = ['ID' => $value,'PATH' => $path];
+					return isset($arguments[0])
+							? ($arResult[strtoupper($arguments[0])] ?? null)
+							: $arResult;
+				}
 				return null;
 			default:
+				if('iblockMultiprop' == $arProp['HINT'])
+					return new iblockMultiprop($this->iblock(),$arProp['CODE'],$value);
 				if('MULTIDATA' === $arProp['CODE'] && \Bitrix\Main\Loader::includeModule('forumedia.applications'))
 					return new \forumedia\applications\multiProp($this->iblock(),$arProp['CODE'],$value);
-				if(in_array($arProp['USER_TYPE'],['Date','DateTime']))
-					return self::dateValue($value,$arguments);
-				if('directory' === $arProp['USER_TYPE'])
-					return new \forumedia\common\propHl($this->iblock(),$arProp['CODE'],$value);
-				if('UserID' === $arProp['USER_TYPE'] && $value)
-					return new \forumedia\common\user($value);
-				if('HTML' === $arProp['USER_TYPE'] && $value)
-					return $value['TEXT'];
+				if($arProp['USER_TYPE']){
+					switch($arProp['USER_TYPE']){
+						case 'Date':
+						case 'DateTime':
+							return $value
+								? ('Y' === $arProp['MULTIPLE']
+									? array_map(function($value) use ($arguments){
+											return $value ? static::dateValue($value,$arguments) : null;
+										},$value)
+									: static::dateValue($value,$arguments))
+								: null;
+						case 'directory':
+							return new \forumedia\common\propHl($this->iblock(),$arProp['CODE'],$value);
+						case 'UserID':
+							return $value
+								? ('Y' === $arProp['MULTIPLE']
+									? array_map(function($id){ return $id ? new user($id) : null; },$value)
+									: new user($value))
+								: null;
+						case 'HTML':
+							return $value ? $value['TEXT'] : null;
+					}
+				}
 				return $value;
 		}
 	}
@@ -145,7 +168,7 @@ class iblockElement{
 	 * @param type $arFilter
 	 * @param type $arSelect
 	 * @param type $arProps
-	 * @return \self
+	 * @return \static
 	 * @throws \Exception
 	 */
 	static function select($arFilter,$arSelect = null,$arProps = null,&$rs = null){
@@ -176,15 +199,15 @@ class iblockElement{
 	}
 	
 	static function getFirst($arFilter,$arSelect = null,$arProps = []){
-		return ($arEl = self::select($arFilter,$arSelect,array_merge(['nTopCount' => 1],$arProps)))
+		return ($arEl = static::select($arFilter,$arSelect,array_merge(['nTopCount' => 1],$arProps)))
 			? array_shift($arEl)
-			: new self(null);
+			: new static(null);
 	}
 	
 	static function getById($id){
 		return $id
-			? self::getFirst(['ID' => $id])
-			: new self(null);
+			? static::getFirst(['ID' => $id])
+			: new static(null);
 	}
 	
 	function iblock(){
