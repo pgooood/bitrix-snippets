@@ -54,12 +54,14 @@ class iblock{
 	 */
 	function getList($arFilter,$arSelect = null,$arProps = null){
 		if(!is_array($arFilter))
-			$arFilter = array();
+			$arFilter = [];
 		return \CIBlockElement::GetList(
-				empty($arProps['group']) ? (empty($arProps['sort']) ? array('SORT' => 'ASC','ID' => 'DESC') : $arProps['sort']) : null
-				,array_merge($arFilter,array('IBLOCK_ID' => $this->id))
-				,empty($arProps['group']) ? false : $arProps['group']
-				,empty($arProps['nav']) ? false : $arProps['nav']
+				empty($arProps['group'])
+					? (empty($arProps['sort']) ? ['SORT' => 'ASC','ID' => 'DESC'] : $arProps['sort'])
+					: null
+				,array_merge($arFilter,['IBLOCK_ID' => $this->id])
+				,$arProps['group'] ?? false
+				,$arProps['nav'] ?? false
 				,$arSelect
 		);
 	}
