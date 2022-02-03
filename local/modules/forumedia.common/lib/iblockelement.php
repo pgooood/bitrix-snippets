@@ -10,10 +10,10 @@ namespace forumedia\common;
  * @author Pavel Khoroshkov <pgood@forumedia.com>
  */
 class iblockElement{
-	protected $ibEl,$arFields,$arProps;
+	protected $ibEl,$arProps;
 	
 	function __construct(?\_CIBElement $ibEl){
-		$this->ob($ibEl);
+		$this->ibEl = $ibEl;
 	}
 	
 	/**
@@ -23,16 +23,49 @@ class iblockElement{
 		if(null === $ibEl)
 			return $this->ibEl;
 		$this->ibEl = $ibEl;
-		$this->arFields = $ibEl->GetFields();
-		$this->arProps = $ibEl->GetProperties();
+		unset($this->arProps);
 	}
 	
+	/**
+	 * Поля элемента
+	 * @return array
+	 */
 	function fields(){
-		return $this->arFields;
+		return $this->ob()->GetFields();
 	}
 	
+	/**
+	 * Значение поля элемента по имени
+	 * @param string $name
+	 * @return mixed
+	 */
+	function field($name){
+		$fieldName = strtoupper(self::toSnakeCase($name));
+		$arFields = $this->fields();
+		return $arFields['~'.$fieldName]
+			?? $arFields[$fieldName]
+			?? $arFields['~PROPERTY_'.$fieldName]
+			?? $arFields['~PROPERTY_'.$fieldName.'_VALUE']
+			?? null;
+	}
+	
+	/**
+	 * Свойства элемента
+	 * @return array
+	 */
 	function props(){
-		return $this->arProps;
+		if(!isset($this->arProps))
+			$this->arProps = $this->ob()->GetProperties();
+		return $this->arProps ?? [];
+	}
+	
+	/**
+	 * Информация о свойстве и его значение
+	 * @param string $name
+	 * @return array
+	 */
+	function prop($name){
+		return $this->props()[strtoupper(self::toSnakeCase($name))] ?? null;
 	}
 	
 	/**
@@ -50,11 +83,9 @@ class iblockElement{
 	 * @return mixed
 	 */
 	function __call($name,$arguments){
-		$fieldName = strtoupper(self::toSnakeCase($name));
-		if(isset($this->arProps[$fieldName])){
-			$r = &$this->arProps[$fieldName];
+		if($r = $this->prop($name)){
 			if('Y' === $r['MULTIPLE']){
-				if('raw' == $arguments[0] ?? null)
+				if('raw' === $arguments[0] ?? null)
 					return $r['~VALUE'];
 				switch($r['PROPERTY_TYPE']){
 					case 'E':
@@ -72,27 +103,23 @@ class iblockElement{
 			}
 			return $this->propValue($r,$r['~VALUE'],$arguments);
 		}
-		return $this->fieldValue($fieldName,$arguments);
+		return $this->fieldValue($name,$arguments);
 	}
 	
 	protected function fieldValue($name,&$arguments){
+		$value = $this->field($name);
 		switch($name){
 			case 'ACTIVE_FROM':
 			case 'ACTIVE_TO':
 			case 'TIMESTAMP_X':
 			case 'DATE_CREATE':
-				return static::dateValue($this->arFields[$name],$arguments);
-			case 'PREVIEW_TEXT':
-			case 'DETAIL_TEXT':
-				return 'html' == $this->arFields[$name.'_TYPE']
-					? htmlspecialchars_decode($this->arFields[$name])
-					: $this->arFields[$name];
+				return static::dateValue($value,$arguments);
 		}
-		return $this->arFields[$name] ?? $this->arFields['PROPERTY_'.$name] ?? $this->arFields['PROPERTY_'.$name.'_VALUE'] ?? null;
+		return $value;
 	}
 	
 	protected function propValue(&$arProp,$value,&$arguments){
-		if('raw' == $arguments[0] ?? null)
+		if('raw' === $arguments[0] ?? null)
 			return $value;
 		switch($arProp['PROPERTY_TYPE']){
 			case 'L':
@@ -156,6 +183,11 @@ class iblockElement{
 		}
 	}
 	
+	function iblock(){
+		if(\Bitrix\Main\Loader::includeModule('forumedia.common'))
+			return new \forumedia\common\iblock($this->field('IBLOCK_ID'));
+	}
+	
 	static function toSnakeCase($v){
 		if(is_array($v))
 			$v = $v[1].'_'.strtolower($v[2]).$v[3];
@@ -182,6 +214,8 @@ class iblockElement{
 			$arFilter['IBLOCK_ID'] = \forumedia\common\iblock::findId($arFilter['IBLOCK_CODE']) ?: -1;
 			unset($arFilter['IBLOCK_CODE']);
 		}
+		if($arSelect && !in_array('IBLOCK_ID',$arSelect))
+			$arSelect[] = 'IBLOCK_ID';
 		$arRes = [];
 		$rs = \CIBlockElement::GetList(
 				empty($arProps['group'])
@@ -193,7 +227,7 @@ class iblockElement{
 				,$arSelect
 			);
 		$className = get_called_class();
-		while($ibEl = $rs->GetNextElement(false,false))
+		while($ibEl = $rs->GetNextElement())
 			$arRes[] = new $className($ibEl);
 		return $arRes;
 	}
@@ -210,11 +244,6 @@ class iblockElement{
 			: new static(null);
 	}
 	
-	function iblock(){
-		if(\Bitrix\Main\Loader::includeModule('forumedia.common'))
-			return new \forumedia\common\iblock($this->arFields['IBLOCK_ID']);
-	}
-	
 	protected static function dateValue($value,&$arguments){
 		if(!empty($value) && $arguments){
 			$dt = isset($arguments[1])
@@ -226,4 +255,3 @@ class iblockElement{
 	}
 	
 }
-
